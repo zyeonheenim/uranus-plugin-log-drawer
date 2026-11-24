@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实时日志小气泡 · 超简单说明书</title>
+<style>
+  :root{
+    --paper:#ffffff; --ink:#1c1c1e; --soft:#5a5a5f; --faint:#8c8c93;
+    --line:#e3e3e6; --sunken:#f5f5f7; --good:#12814f; --goodbg:#eaf7f0;
+    --warn:#cf3a2c; --warnbg:#fdf0ee; --accent:#3b5bdb; --accentbg:#eef2ff;
+    --shadow:0 4px 18px rgba(20,20,40,.08);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--sunken);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px 80px;}
+  header{background:linear-gradient(135deg,#2b3a67,#3b5bdb);color:#fff;padding:52px 20px 44px;text-align:center;}
+  header .kick{font-size:14px;letter-spacing:2px;opacity:.85;font-weight:600;}
+  header h1{font-size:40px;margin:12px 0 8px;line-height:1.25;}
+  header p{font-size:18px;margin:0;opacity:.9;}
+  header .badge{display:inline-block;margin-top:18px;background:rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 18px;font-size:14px;}
+  section{background:var(--paper);border:1px solid var(--line);border-radius:18px;
+    padding:30px 32px;margin:22px 0;box-shadow:var(--shadow);}
+  h2{font-size:26px;margin:0 0 6px;display:flex;align-items:center;gap:12px;}
+  h2 .num{display:inline-flex;width:38px;height:38px;border-radius:12px;background:var(--accentbg);
+    color:var(--accent);align-items:center;justify-content:center;font-size:20px;flex:none;}
+  .lead{color:var(--soft);font-size:16px;margin:0 0 20px;}
+  h3{font-size:19px;margin:26px 0 10px;}
+  p{margin:10px 0;}
+  .big{font-size:17px;}
+  .callout{border-radius:14px;padding:16px 20px;margin:18px 0;font-size:16px;}
+  .callout.tip{background:var(--accentbg);border-left:5px solid var(--accent);}
+  .callout.warn{background:var(--warnbg);border-left:5px solid var(--warn);}
+  .callout.good{background:var(--goodbg);border-left:5px solid var(--good);}
+  .callout b{color:var(--ink);}
+  figure{margin:20px 0;text-align:center;}
+  figure svg{max-width:100%;height:auto;}
+  figcaption{color:var(--faint);font-size:14px;margin-top:8px;}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:11px 14px;text-align:left;vertical-align:top;}
+  th{background:var(--sunken);font-weight:600;}
+  .dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:-1px;margin-right:7px;}
+  .dot.g{background:var(--good);} .dot.r{background:var(--warn);}
+  .pill{display:inline-block;border-radius:999px;padding:2px 11px;font-size:13px;font-weight:600;}
+  .pill.g{background:var(--goodbg);color:var(--good);} .pill.r{background:var(--warnbg);color:var(--warn);}
+  .steps{counter-reset:s;margin:18px 0;}
+  .step{position:relative;padding:16px 20px 16px 66px;border:1px solid var(--line);
+    border-radius:14px;margin:12px 0;background:var(--paper);}
+  .step::before{counter-increment:s;content:counter(s);position:absolute;left:18px;top:16px;
+    width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;}
+  .step b{font-size:17px;}
+  code{background:var(--sunken);border:1px solid var(--line);border-radius:6px;
+    padding:2px 8px;font-size:14px;font-family:"SF Mono",Consolas,monospace;}
+  details{border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;}
+  summary{cursor:pointer;font-weight:600;font-size:16px;}
+  details p{color:var(--soft);margin:12px 0 2px;}
+  .kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;
+    padding:1px 8px;background:#fff;font-size:14px;font-family:inherit;}
+  footer{text-align:center;color:var(--faint);font-size:14px;padding:30px 20px;}
+  .mini{font-size:14px;color:var(--faint);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kick">Uranus 插件 · 使用说明</div>
+  <h1>实时日志小气泡</h1>
+  <p>一个钉在屏幕角落的小工具，看图就会用</p>
+  <div class="badge">v2.0.2 · 超简单说明书</div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <h2><span class="num">?</span>它是干嘛的？一句话</h2>
+  <p class="big">你让 AI 写剧情、等它出字的时候，最怕两件事：<b>它到底在慢慢写，还是已经断了？</b></p>
+  <p class="big">以前你得切到「控制台」去看一堆看不懂的日志。装了这个插件后，<b>屏幕角落一直有个小气泡</b>，点开就能看。断了会变红、报错会标红，一眼就知道。</p>
+  <div class="callout tip">💡 说白了：<b>它就是贴在屏幕角落的"AI 工作状态灯 + 小账本"</b>，不用你到处切页面。</div>
+</section>
+
+<section>
+  <h2><span class="num">1</span>它长什么样？</h2>
+  <p class="lead">就两个样子：缩起来是个小胶囊，点开是个小窗口。</p>
+
+  <figure>
+  <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang SC,sans-serif">
+    <!-- 左：胶囊 -->
+    <text x="150" y="30" text-anchor="middle" font-size="16" fill="#5a5a5f" font-weight="600">① 缩起来（小胶囊）</text>
+    <rect x="55" y="60" width="190" height="52" rx="26" fill="#fff" stroke="#e3e3e6" stroke-width="2"/>
+    <circle cx="90" cy="86" r="6" fill="#12814f"/>
+    <text x="108" y="92" font-size="15" fill="#1c1c1e">实时日志</text>
+    <rect x="196" y="74" width="22" height="22" rx="11" fill="#cf3a2c"/>
+    <text x="207" y="90" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">3</text>
+    <!-- 标注 -->
+    <line x1="90" y1="112" x2="60" y2="150" stroke="#8c8c93" stroke-width="1.5"/>
+    <text x="20" y="168" font-size="13" fill="#5a5a5f">绿点=正常工作</text>
+    <line x1="207" y1="96" x2="250" y2="150" stroke="#8c8c93" stroke-width="1.5"/>
+    <text x="196" y="168" font-size="13" fill="#cf3a2c">红色数字=有3条报错</text>
+
+    <!-- 右：面板 -->
+    <text x="530" y="30" text-anchor="middle" font-size="16" fill="#5a5a5f" font-weight="600">② 点开（小窗口）</text>
+    <rect x="380" y="55" width="300" height="220" rx="16" fill="#fff" stroke="#e3e3e6" stroke-width="2"/>
+    <rect x="380" y="55" width="300" height="42" rx="16" fill="#f5f5f7"/>
+    <text x="396" y="82" font-size="14" fill="#1c1c1e" font-weight="700">▷ 运行日志</text>
+    <circle cx="500" cy="76" r="5" fill="#12814f"/>
+    <text x="510" y="81" font-size="11" fill="#12814f">已连接</text>
+    <rect x="592" y="63" width="52" height="26" rx="8" fill="#eef2ff"/>
+    <text x="618" y="80" text-anchor="middle" font-size="12" fill="#3b5bdb">模型</text>
+    <text x="664" y="81" font-size="16" fill="#8c8c93">×</text>
+    <!-- 工具栏 -->
+    <text x="396" y="122" font-size="11" fill="#8c8c93">DEBUG INFO WARN ERROR CRITICAL</text>
+    <rect x="396" y="132" width="120" height="22" rx="6" fill="#f5f5f7"/>
+    <text x="404" y="147" font-size="11" fill="#8c8c93">🔍 搜索关键词…</text>
+    <!-- 日志行 -->
+    <rect x="392" y="162" width="276" height="26" rx="5" fill="#fdf0ee"/>
+    <text x="398" y="179" font-size="11" fill="#cf3a2c">02:31:07  ERROR  接口超时了</text>
+    <rect x="392" y="190" width="276" height="24" rx="5" fill="#fff"/>
+    <text x="398" y="206" font-size="11" fill="#5a5a5f">02:31:08  INFO   开始生成</text>
+    <rect x="392" y="216" width="276" height="24" rx="5" fill="#fff"/>
+    <text x="398" y="232" font-size="11" fill="#5a5a5f">02:31:09  DEBUG  收到数据</text>
+    <text x="396" y="266" font-size="11" fill="#8c8c93">拖动标题栏可移动 · 点 × 收回气泡</text>
+  </svg>
+  <figcaption>左边是收起来的样子，右边是点开的样子。红底那行就是"报错"。</figcaption>
+  </figure>
+
+  <div class="callout good">✅ 认准这几个颜色就没错了：<span class="dot g"></span><b>绿点</b>＝一切正常；<span class="dot r"></span><b>红点/红色数字</b>＝出问题了，点开看红底那几行。</div>
+</section>
+
+<section>
+  <h2><span class="num">2</span>怎么装上？三步</h2>
+  <div class="steps">
+    <div class="step"><b>下载压缩包</b><br><span class="mini">拿到 <code>uranus-plugin-log-drawer-v2.0.2.zip</code> 这个文件，不用打开它。</span></div>
+    <div class="step"><b>解压，放进插件文件夹</b><br><span class="mini">解压后是一个文件夹，把它整个拖进 Uranus 安装目录下的 <code>data/plugins/</code> 文件夹里。<br>（里面应该能看到 <code>manifest.json</code> 这个文件，放的路径就对了）</span></div>
+    <div class="step"><b>去控制台打开开关</b><br><span class="mini">打开控制台 →「插件」页面 → 找到「实时日志」→ 把开关打开 → <b>刷新一下网页</b>（<span class="kbd">Cmd</span>+<span class="kbd">R</span>，或按 <span class="kbd">Ctrl</span>+<span class="kbd">F5</span>）。<br>屏幕角落出现小气泡，就成功了 🎉</span></div>
+  </div>
+  <div class="callout warn">⚠️ 装完<b>一定要刷新网页</b>。没刷新看不到气泡，这是正常的，不是装坏了。</div>
+</section>
+
+<section>
+  <h2><span class="num">3</span>平时怎么用？</h2>
+  <table>
+    <tr><th style="width:30%">我想做的事</th><th>怎么做</th></tr>
+    <tr><td>看日志</td><td>点一下角落的<b>小气泡</b>，窗口就展开；再点右上角 <b>×</b> 收回。</td></tr>
+    <tr><td>挪位置</td><td><b>按住小胶囊拖动</b>，或展开后<b>按住顶部标题栏拖动</b>。位置会记住，下次还在那儿。</td></tr>
+    <tr><td>只看报错</td><td>点工具栏的 <b>WARNING</b> 或 <b>ERROR</b>，就只显示严重的问题，清爽很多。</td></tr>
+    <tr><td>找某句话</td><td>在<b>搜索框</b>里打字，日志会筛出含这个词的行。</td></tr>
+    <tr><td>日志刷太快看不清</td><td>点 <b>暂停</b>，画面停住；旁边会显示攒了几条没看。再看点<b>继续</b>。</td></tr>
+    <tr><td>看某条的详细信息</td><td>点那一行文字，会展开原始数据（一般是给懂技术的人排查用）。</td></tr>
+    <tr><td>清屏</td><td>点 <b>清空</b>，日志列表归零。</td></tr>
+    <tr><td>回到最新</td><td>往上翻历史后，点<b>回到最新</b>按钮，瞬间跳回底部。</td></tr>
+    <tr><td>每次打开就展开</td><td>勾选底部<b>默认展开</b>，以后一开网页就是大窗口。</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="num">4</span>模型快切是什么？</h2>
+  <p class="big">这是个<b>偷懒神器</b>：不用去控制台一层层点设置，在这里就能把 AI 用的模型换掉。</p>
+  <figure>
+  <svg viewBox="0 0 720 190" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang SC,sans-serif">
+    <rect x="30" y="20" width="660" height="150" rx="14" fill="#fff" stroke="#e3e3e6" stroke-width="2"/>
+    <text x="50" y="50" font-size="14" fill="#1c1c1e" font-weight="700">① 点标题栏的「模型」按钮</text>
+    <rect x="560" y="32" width="70" height="28" rx="8" fill="#eef2ff"/>
+    <text x="595" y="51" text-anchor="middle" font-size="13" fill="#3b5bdb">模型</text>
+    <line x1="50" y1="66" x2="670" y2="66" stroke="#e3e3e6"/>
+    <text x="50" y="92" font-size="13" fill="#5a5a5f">② 选角色</text>
+    <rect x="140" y="76" width="150" height="26" rx="6" fill="#f5f5f7" stroke="#e3e3e6"/>
+    <text x="150" y="94" font-size="12" fill="#1c1c1e">全部角色 ▾</text>
+    <text x="310" y="92" font-size="13" fill="#5a5a5f">③ 选模型</text>
+    <rect x="385" y="76" width="160" height="26" rx="6" fill="#f5f5f7" stroke="#e3e3e6"/>
+    <text x="395" y="94" font-size="12" fill="#1c1c1e">gemini-flash ▾</text>
+    <rect x="565" y="76" width="70" height="26" rx="6" fill="#3b5bdb"/>
+    <text x="600" y="94" text-anchor="middle" font-size="13" fill="#fff">切换</text>
+    <text x="50" y="130" font-size="13" fill="#5a5a5f">④ 选档位：</text>
+    <rect x="130" y="115" width="70" height="26" rx="13" fill="#3b5bdb"/>
+    <text x="165" y="133" text-anchor="middle" font-size="12" fill="#fff">聊天</text>
+    <rect x="208" y="115" width="70" height="26" rx="13" fill="#f5f5f7" stroke="#e3e3e6"/>
+    <text x="243" y="133" text-anchor="middle" font-size="12" fill="#5a5a5f">线下</text>
+    <rect x="286" y="115" width="70" height="26" rx="13" fill="#f5f5f7" stroke="#e3e3e6"/>
+    <text x="321" y="133" text-anchor="middle" font-size="12" fill="#5a5a5f">兜底</text>
+    <rect x="380" y="112" width="290" height="32" rx="8" fill="#eaf7f0"/>
+    <text x="395" y="133" font-size="12" fill="#12814f">切换成功：聊天模型已切到 gpt-test</text>
+    <text x="50" y="162" font-size="11" fill="#8c8c93">切换成功会出现绿色提示；失败会出现红色提示，照着提示改就行。</text>
+  </svg>
+  <figcaption>顺序：点「模型」→ 选角色 → 选模型 → 选档位 → 点「切换」。</figcaption>
+  </figure>
+  <h3>三个档位是什么意思？</h3>
+  <table>
+    <tr><th>档位</th><th>管的是</th></tr>
+    <tr><td><b>聊天</b></td><td>线上发消息时用的模型</td></tr>
+    <tr><td><b>线下</b></td><td>线下剧情用的模型（没单独配就跟着聊天走）</td></tr>
+    <tr><td><b>兜底</b></td><td>主模型出问题时的备用模型（原"副 API"）</td></tr>
+  </table>
+  <div class="callout warn">⚠️ 如果你没装过源码补丁，切模型走的是"整份配置写回"的路子。<b>切换前，先把别的页面里没保存的草稿存一下</b>，免得被覆盖。</div>
+</section>
+
+<section>
+  <h2><span class="num">5</span>出问题了怎么办？</h2>
+  <details><summary>❓ 装好了，但屏幕角落没有气泡</summary>
+    <p>九成是没刷新。按 <span class="kbd">Cmd</span>+<span class="kbd">R</span>（或 <span class="kbd">Ctrl</span>+<span class="kbd">F5</span>）强制刷新。还不行就去「插件」页确认开关是开的、文件夹放对了位置。</p></details>
+  <details><summary>❓ 气泡点开是空的 / 一直显示"已断开"</summary>
+    <p>看下服务（Uranus）是不是开着。服务没起来，日志流就断。服务恢复后它会自动重连。</p></details>
+  <details><summary>❓ 点「切换」没反应</summary>
+    <p>先确认你<b>选了模型</b>（下拉里别停在"选一个模型…"）再点切换。成功会有绿色提示，失败会有红字提示原因。如果点了完全没动静，强制刷新一次再试。</p></details>
+  <details><summary>❓ 气泡拖不动</summary>
+    <p>按住<b>小胶囊本身</b>或展开后的<b>顶部标题栏</b>拖，别按在按钮上。v2.0.2 已修复拖动问题，如果还拖不动，强制刷新确保加载的是新版。</p></details>
+  <details><summary>❓ 想临时关掉所有插件排查问题</summary>
+    <p>在网址后面加上 <code>?noplugins</code> 再回车（加在 <code>#</code> 前面），所有插件都不加载。删掉这串参数刷新就恢复。</p></details>
+  <details><summary>❓ 不想要了，怎么卸载？</summary>
+    <p>去「插件」页把这个插件的开关关掉即可；想彻底删除，就把 <code>data/plugins/uranus-plugin-log-drawer</code> 这个文件夹删掉，再刷新网页。</p></details>
+</section>
+
+<section>
+  <h2><span class="num">6</span>一句话记住</h2>
+  <div class="callout good big" style="font-size:18px;line-height:1.9">
+    <b>绿点 = 好好写着呢；红字红点 = 出问题了；点气泡看详情，点「模型」换模型；能拖、能收、能搜。</b>
+  </div>
+  <p class="mini" style="margin-top:20px">版本 v2.0.2 · 本说明书对应压缩包 uranus-plugin-log-drawer-v2.0.2.zip</p>
+</section>
+
+</div>
+<footer>实时日志小气泡 · 超简单说明书 · 有问题看第 5 节「出问题了怎么办」</footer>
+</body>
+</html>

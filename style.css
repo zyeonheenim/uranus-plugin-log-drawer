@@ -1,0 +1,396 @@
+/*
+ * 常驻日志抽屉 · 插件样式 v2（照原版 logdrawer.jsx 的外观复刻）
+ * 全部类名带 jld- 前缀，不碰控制台自己的类，避免升级后撞车。
+ * 配色走原版设计 token（--paper/--ink/--line/... 是 "R G B" 形式），
+ * 插件自身带一份浅色 fallback，装在原版里就用原版变量自动跟随明暗主题。
+ */
+
+#uranus-plugin-log-drawer {
+  /* 原版 token 的浅色 fallback（"R G B" 形式，配合 rgb() 使用） */
+  --jld-paper: var(--paper, 255 255 255);
+  --jld-sunken: var(--sunken, 244 244 245);
+  --jld-ink: var(--ink, 24 24 27);
+  --jld-ink-soft: var(--ink-soft, 97 97 97);
+  --jld-ink-faint: var(--ink-faint, 120 120 120);
+  --jld-ink-meta: var(--ink-meta, 168 168 168);
+  --jld-line: var(--line, 216 216 216);
+  --jld-good: var(--good, 15 123 79);
+  --jld-warn: var(--warn, 207 58 44);
+  --jld-warn-soft: var(--warn-soft, 254 243 242);
+  --jld-invert: var(--paper-invert, 250 250 250);
+
+  position: fixed;
+  z-index: 9000;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgb(var(--jld-ink));
+}
+
+#uranus-plugin-log-drawer button,
+#uranus-plugin-log-drawer input,
+#uranus-plugin-log-drawer select {
+  font-family: inherit;
+}
+
+/* ---------- 收起态：胶囊 ---------- */
+.jld-capsule {
+  position: fixed;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgb(var(--jld-line));
+  border-radius: 999px;
+  background: rgb(var(--jld-paper));
+  color: rgb(var(--jld-ink));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  cursor: grab;
+  touch-action: none;
+  transition: background-color 150ms;
+  white-space: nowrap;
+}
+.jld-capsule:hover { background: rgb(var(--jld-sunken)); }
+.jld-radio {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  flex: none;
+  color: rgb(var(--jld-good));
+  animation: jld-pulse 2s infinite;
+}
+.jld-radio svg { display: block; width: 100%; height: 100%; }
+.jld-off .jld-radio { color: rgb(var(--jld-warn)); animation: none; }
+@keyframes jld-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+.jld-disc { color: rgb(var(--jld-warn)); font-size: 10px; text-transform: uppercase; }
+.jld-problem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgb(var(--jld-warn));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ---------- 展开面板 ---------- */
+.jld-panel {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  width: min(440px, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid rgb(var(--jld-line));
+  border-radius: 16px;
+  background: rgb(var(--jld-paper));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- 头部 ---------- */
+.jld-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgb(var(--jld-line));
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.jld-dragging .jld-head,
+.jld-dragging .jld-capsule { cursor: grabbing; }
+.jld-head-left,
+.jld-head-right { display: flex; align-items: center; gap: 6px; }
+.jld-head-left { min-width: 0; }
+.jld-ico-term { display: inline-flex; color: rgb(var(--jld-ink-faint)); flex: none; }
+.jld-title { color: rgb(var(--jld-ink)); font-size: 13px; white-space: nowrap; }
+.jld-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgb(var(--jld-good));
+  font-size: 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.jld-status .jld-radio { width: 11px; height: 11px; }
+.jld-off .jld-status-text { color: rgb(var(--jld-warn)); }
+.jld-head-right { flex: none; gap: 2px; }
+.jld-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(var(--jld-ink-faint));
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 150ms, color 150ms;
+}
+.jld-btn:hover { background: rgb(var(--jld-sunken)); color: rgb(var(--jld-ink)); }
+.jld-switch.jld-switch-on { background: rgb(var(--jld-sunken)); color: rgb(var(--jld-ink)); }
+.jld-close { width: 32px; padding: 0; }
+
+/* ---------- 模型快切 ---------- */
+.jld-switcher {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgb(var(--jld-line));
+}
+.jld-sw-row1,
+.jld-sw-row2 { display: flex; align-items: center; gap: 8px; }
+.jld-sw-row2 { margin-top: 5px; }
+.jld-role-sel,
+.jld-model-sel {
+  height: 26px;
+  border: 1px solid rgb(var(--jld-line));
+  border-radius: 8px;
+  background: rgb(var(--jld-paper));
+  color: rgb(var(--jld-ink));
+  font-size: 11px;
+  padding: 0 6px;
+  min-width: 0;
+}
+.jld-role-sel { width: 92px; flex: none; }
+.jld-model-sel { flex: 1; }
+.jld-apply {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 28px;
+  flex: none;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(var(--jld-ink));
+  color: rgb(var(--jld-invert));
+  font-size: 11px;
+  cursor: pointer;
+  transition: opacity 150ms;
+}
+.jld-apply:hover { opacity: .9; }
+.jld-apply:disabled { opacity: .4; cursor: default; }
+.jld-targets { display: flex; gap: 2px; flex: none; }
+.jld-target {
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(var(--jld-ink-faint));
+  font-size: 11px;
+  cursor: pointer;
+}
+.jld-target:hover { background: rgb(var(--jld-sunken)); }
+.jld-target-on { background: rgb(var(--jld-sunken)); color: rgb(var(--jld-ink)); }
+.jld-note {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(var(--jld-ink-meta));
+  font-size: 11px;
+  line-height: 1.5;
+}
+.jld-note-ok { color: rgb(var(--jld-good)); }
+.jld-note-bad { color: rgb(var(--jld-warn)); }
+
+/* ---------- 工具条 ---------- */
+.jld-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgb(var(--jld-line));
+}
+.jld-levels { display: flex; gap: 2px; }
+.jld-level {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(var(--jld-ink-faint));
+  font-size: 10px;
+  cursor: pointer;
+  transition: background-color 150ms, color 150ms;
+}
+.jld-level:hover { background: rgb(var(--jld-sunken)); color: rgb(var(--jld-ink)); }
+.jld-level-on { background: rgb(var(--jld-sunken)); color: rgb(var(--jld-ink)); }
+.jld-search {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 120px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgb(var(--jld-line));
+  color: rgb(var(--jld-ink-faint));
+}
+.jld-search:focus-within { border-color: rgb(var(--jld-ink)); }
+.jld-q {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: rgb(var(--jld-ink));
+  font-size: 11px;
+}
+.jld-q::placeholder { color: rgb(var(--jld-ink-meta)); }
+.jld-pause.jld-paused { color: rgb(var(--jld-warn)); }
+.jld-clear:disabled { opacity: .4; cursor: default; }
+.jld-tools .jld-btn { height: 28px; }
+
+/* ---------- 日志列表 ---------- */
+.jld-list-wrap { position: relative; }
+.jld-list {
+  height: 300px;
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.jld-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 24px;
+}
+.jld-empty p {
+  max-width: 40ch;
+  margin: 0;
+  color: rgb(var(--jld-ink-faint));
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+}
+.jld-row {
+  padding: 5px 12px;
+  border-bottom: 1px solid rgb(var(--jld-line));
+}
+.jld-row:last-child { border-bottom: 0; }
+.jld-row-warn { background: rgb(var(--jld-warn-soft)); }
+.jld-row-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+.jld-time {
+  flex: none;
+  margin-top: 2px;
+  color: rgb(var(--jld-ink-meta));
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.jld-scope {
+  flex: none;
+  max-width: 100%;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(var(--jld-ink));
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.jld-scope-debug { color: rgb(var(--jld-ink-meta)); }
+.jld-scope-warn,
+.jld-scope-error,
+.jld-scope-critical { color: rgb(var(--jld-warn)); }
+.jld-msg {
+  display: block;
+  min-width: 0;
+  flex: 1 1 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--jld-ink-soft));
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: left;
+  cursor: default;
+}
+.jld-msg-warn { color: rgb(var(--jld-warn)); }
+.jld-msg.has-detail { cursor: pointer; }
+.jld-msg.has-detail:hover { color: rgb(var(--jld-ink)); }
+.jld-msg-text { white-space: pre-wrap; word-break: break-word; }
+.jld-chev { display: inline-block; margin-left: 4px; vertical-align: middle; color: rgb(var(--jld-ink-meta)); transition: transform 150ms; }
+.jld-chev svg { display: inline-block; }
+.jld-chev-open { transform: rotate(180deg); }
+.jld-detail {
+  max-height: 256px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  overflow: auto;
+  background: rgb(var(--jld-sunken));
+  color: rgb(var(--jld-ink-soft));
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.jld-detail code { font-family: var(--font-mono, ui-monospace, monospace); }
+.jld-to-latest {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid rgb(var(--jld-line));
+  border-radius: 999px;
+  background: rgb(var(--jld-paper));
+  color: rgb(var(--jld-ink-soft));
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  cursor: pointer;
+}
+.jld-to-latest:hover { background: rgb(var(--jld-sunken)); color: rgb(var(--jld-ink)); }
+
+/* ---------- 底栏 ---------- */
+.jld-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid rgb(var(--jld-line));
+}
+.jld-default-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  color: rgb(var(--jld-ink-faint));
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+.jld-default { width: 14px; height: 14px; accent-color: #3b82f6; }
+.jld-foot p {
+  margin: 0;
+  color: rgb(var(--jld-ink-faint));
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* hidden 属性兜底（section/button 默认 display 会被上面的规则盖掉） */
+#uranus-plugin-log-drawer [hidden] { display: none !important; }
+
+/* 小屏：模型区两行改纵向，别挤 */
+@media (max-width: 420px) {
+  .jld-sw-row1 { flex-wrap: wrap; }
+  .jld-role-sel { width: 84px; }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "uranus-plugin-log-drawer",
+  "name": "常驻日志抽屉",
+  "version": "2.0.2",
+  "author": "zyeonheenim",
+  "repo": "https://github.com/zyeonheenim/uranus-plugin-log-drawer",
+  "description": "按原版日志抽屉 1:1 复刻：任意页面角落钉一个实时运行日志窗，五级筛选（DEBUG~CRITICAL）、搜索、暂停、清空、detail 展开、问题角标、拖动、默认展开，还带模型快切。等模型出字时不用切去控制台就能看清是慢还是断了。",
+  "uranus": ">=1.23.0",
+  "entry": {
+    "client": "client.js",
+    "css": "style.css"
+  },
+  "permissions": [
+    "读取运行日志（/api/logs/stream）",
+    "读取配置用于模型快切（/api/config），切换时写回模型引用（/api/role-model 或 PUT /api/config）"
+  ],
+  "config": [
+    {
+      "key": "defaultOpen",
+      "type": "boolean",
+      "title": "打开页面就展开",
+      "desc": "关掉的话每次进页面只显示一个小胶囊，点一下才展开；面板底部也能随时勾选。",
+      "default": true
+    },
+    {
+      "key": "maxRows",
+      "type": "number",
+      "title": "最多留几行",
+      "desc": "超了就丢掉最旧的。默认 2000 行（跟后端环形缓冲一致）。",
+      "default": 2000,
+      "min": 20,
+      "max": 2000
+    },
+    {
+      "key": "level",
+      "type": "select",
+      "title": "默认最低级别",
+      "desc": "打开时只看这一级和更严重的；面板上随时可改。",
+      "default": "info",
+      "options": [
+        {
+          "value": "debug",
+          "label": "DEBUG 全部"
+        },
+        {
+          "value": "info",
+          "label": "INFO 信息及以上"
+        },
+        {
+          "value": "warn",
+          "label": "WARNING 及以上"
+        },
+        {
+          "value": "error",
+          "label": "ERROR 及以上"
+        },
+        {
+          "value": "critical",
+          "label": "CRITICAL 仅严重"
+        }
+      ]
+    }
+  ]
+}
