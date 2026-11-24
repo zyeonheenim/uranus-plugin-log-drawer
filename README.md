@@ -2,6 +2,10 @@
 
 按原版玩家补丁 01「常驻运行日志抽屉」**1:1 复刻**的插件版。不碰任何服务端源码，装了就能用。
 
+> 📖 **不想看技术说明？** 这里有一份图文《超简单说明书》，浏览器打开就能直接在线读：
+> **[https://zyeonheenim.github.io/uranus-plugin-log-drawer/GUIDE-超简单说明书.html](https://zyeonheenim.github.io/uranus-plugin-log-drawer/GUIDE-%E8%B6%85%E7%AE%80%E5%8D%95%E8%AF%B4%E6%98%8E%E4%B9%A6.html)**
+> 三步安装、界面长什么样、模型快切怎么用、出问题怎么办，全在上面。
+
 ## 这个插件做什么
 
 在任意页面的角落钉一个实时运行日志窗。等模型出字时不用切去「控制台」，就能看清到底是"在慢慢生成"还是"API 已经断了"。
